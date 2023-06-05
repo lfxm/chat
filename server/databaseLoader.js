@@ -30,6 +30,17 @@ function createTables(channels, categories) {
         name TEXT NOT NULL UNIQUE
       )
     `);
+
+    db.run(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        content TEXT NOT NULL,
+        author TEXT NOT NULL,
+        timestamp INTEGER,
+        channel INTEGER,
+        FOREIGN KEY (channel) REFERENCES channels (id)
+      )
+    `);
   });
 
   // Załaduj kanały i kategorie z bazy danych
@@ -87,25 +98,24 @@ function loadChannels(db, channels) {
   });
 }
 
-
 function loadCategories(db, categories) {
-    db.all('SELECT * FROM categories', (err, rows) => {
-      if (err) {
-        console.error('Błąd podczas pobierania kategorii z bazy danych:', err);
-        return;
-      }
-  
-      rows.forEach((row) => {
-        const category = {
-          id: row.id,
-          name: row.name,
-        };
-        categories.set(row.id, category);
-      });
-  
-      console.log('Załadowano kategorie z bazy danych.');
+  db.all('SELECT * FROM categories', (err, rows) => {
+    if (err) {
+      console.error('Błąd podczas pobierania kategorii z bazy danych:', err);
+      return;
+    }
+
+    rows.forEach((row) => {
+      const category = {
+        id: row.id,
+        name: row.name,
+      };
+      categories.set(row.id, category);
     });
-  }
+
+    console.log('Załadowano kategorie z bazy danych.');
+  });
+}
 
 module.exports = {
   db,
@@ -114,5 +124,5 @@ module.exports = {
   addChannel,
   addCategory,
   loadChannels,
-  loadCategories
+  loadCategories,
 };

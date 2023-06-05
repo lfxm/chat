@@ -70,7 +70,19 @@ const server = net.createServer((socket) => {
   });
 })
 
+
+// ! FIX THIS, PREFIX IS NOT GETTING CATEGORY NAME CORRECTLY !
+// ! FIX THIS, PREFIX IS NOT GETTING CATEGORY NAME CORRECTLY !
 function sendMessageToChannel(channel, message, username, isDM = false) {
+  const timestamp = Math.floor(Date.now() / 1000); // Pobierz aktualny czas unixowy
+
+  // Zapisz wiadomość do bazy danych
+  db.run('INSERT INTO messages (content, author, timestamp, channel) VALUES (?, ?, ?, ?)', [message, username, timestamp, channel], (err) => {
+    if (err) {
+      console.error('Błąd podczas zapisywania wiadomości do bazy danych:', err);
+    }
+  });
+
   clients.forEach((clientInfo, clientSocket) => {
     const { channel: clientChannel, dmTarget } = clientInfo;
 
@@ -81,20 +93,35 @@ function sendMessageToChannel(channel, message, username, isDM = false) {
           prefix = '[DM] [JA]';
         } else {
           prefix = '[DM]';
-        }
+        }// ! FIX THIS, PREFIX IS NOT GETTING CATEGORY NAME CORRECTLY !
       } else {
-        if (username === clientInfo.username) {
-          prefix = `[${category}] [${channel}] [JA]`;
-        } else {
-          const category = channel && channels.get(channel) ? channels.get(channel).category : null;
-          const categoryName = category ? category.name : '';
-          prefix = `[${categoryName}] [${channel}]`;
-        }
+        const channelObj = channels.get(channel);
+        const categoryId = channelObj ? channelObj.category_id : null;
+        const categoryName = getCategoryName(categoryId, categories);
+        const channelName = channelObj ? channelObj.name : '';
+        prefix = categoryId !== null ? `[${categoryName}] [${channelName}]` : `[Bez kategorii] [${channelName}]`;
       }
       clientSocket.write(`${prefix} [${username}] ${message}\n`);
     }
   });
 }
+// ! FIX THIS, PREFIX IS NOT GETTING CATEGORY NAME CORRECTLY !
+function getCategoryName(categoryId, categories) {
+  if (Array.isArray(categories)) {
+    const category = categories.find(cat => cat.id === categoryId);
+    return category ? category.name : 'Brak kategorii';
+  } else if (categories instanceof Map) {
+    for (const [id, category] of categories) {
+      if (id === categoryId) {
+        return category.name;
+      }
+    }
+  }
+
+  return 'Brak kategorii';
+}
+// ! FIX THIS, PREFIX IS NOT GETTING CATEGORY NAME CORRECTLY !
+
 
 server.listen(3000, () => {
   console.log('Serwer nasłuchuje na porcie 3000');
