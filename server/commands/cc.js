@@ -34,7 +34,7 @@ function handle(args, db, clients, channels, categories, socket) {
 
     channels.set(channelId, channel);
 
-    socket.write(`Utworzono nowy kanał "${name}"${categoryId ? ` w kategorii "${category}"` : ''}.\n`);
+    socket.write(`Utworzono nowy kanał "${name}"${categoryId ? ` w kategorii "${category}"` : ' bez kategorii'}.\n`);
   });
 }
 
